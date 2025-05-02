@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import hasi from "../data/assets/hasi.png";
 
 export function useMouseCoordinates() {
   const [coordinates, setCoordinates] = useState({

@@ -1,25 +1,40 @@
 import styled from "styled-components";
 import React, { useEffect, useState } from "react";
 
-/* ✅ modify this usePokemon custom hook to take in a query as an argument */
-export function usePokemon() {
-  /* ✅ this hook should only return one thing: an object with the pokemon data */
+export function usePokemon(query) {
+  const [{data, errors, status}, setState] = useState({
+    data: null,
+    errors: null,
+    status: "idle"
+  });
+
+  useEffect(() => {
+    setState(state => ({ ...state, errors: null, status: "pending" }))
+    fetch(`https://pokeapi.co/api/v2/pokemon/${query}`)
+      .then(r => {
+        if(r.ok) { 
+          return r.json()
+        }
+        return r.text().then(err => { 
+          throw new Error(err) // ✅ Better error handling
+        })
+      })
+      .then(data => setState({ data, errors: null, status: "fulfilled" }))
+      .catch(err => setState({ 
+        data: null,  // ✅ Reset data on error
+        errors: [err.message || "Failed to fetch"], // ✅ Use error message
+        status: "rejected" 
+      }))
+  }, [query]);
+
+  return { data, errors, status } // ✅ Correct return value
 }
 
 function Pokemon({ query }) {
-  /* 
-   ✅ move the code from the useState and useEffect hooks into the usePokemon hook
-   then, call the usePokemon hook to access the pokemon data in this component
-  */
-  const [pokemon, setPokemon] = useState(null);
-  useEffect(() => {
-    fetch(`https://pokeapi.co/api/v2/pokemon/${query}`)
-      .then(r => r.json())
-      .then(setPokemon);
-  }, [query]);
-
-  // 🚫 don't worry about the code below here, you shouldn't have to touch it
-  if (!pokemon) return <h3>Loading...</h3>;
+  const { data: pokemon, status } = usePokemon(query)
+  
+  if (status === "idle" || status === "pending") return <h3>Loading...</h3>;
+  if (status === "rejected") return <h3>Error loading Pokémon</h3>;
 
   return (
     <div>
